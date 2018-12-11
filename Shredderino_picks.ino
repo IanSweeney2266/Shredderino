@@ -6,34 +6,39 @@
 // Copyright (C) 2009 Mike McCauley
 // $Id: MultiStepper.pde,v 1.1 2011/01/05 01:51:01 mikem Exp mikem $
 
-#include <AccelStepper.h>
-#include <TimerThree.h>
+#include <AccelStepper.h> // A library for running multiple steppers quickly
+#include <TimerThree.h> // A library for accessing one of the timers on the Teensy board
 
-const int led = 13;
-const int led2 = 2;
+const int led = 13; // The pin# for an integrated led on the board
+const int led2 = 2; // The pin# for an external breadboarded led (used for debugging)
 
-// Define some steppers and the pins the will use
-AccelStepper s4(AccelStepper::HALF4WIRE, 23, 22, 21, 20); // Defaults to AccelStepper::FULL4WIRE (4 pins) on 2, 3, 4, 5
-AccelStepper s3(AccelStepper::HALF4WIRE, 5, 6, 7, 8);
+// Define some steppers and the pins each will use
+// Set each to Halfstepping mode for smoother operation
 AccelStepper s1(AccelStepper::HALF4WIRE, 9, 10, 11, 12);
-AccelStepper s6(AccelStepper::HALF4WIRE, 24, 25, 26, 27);
 AccelStepper s2(AccelStepper::HALF4WIRE, 29, 30, 31, 32);
+AccelStepper s3(AccelStepper::HALF4WIRE, 5, 6, 7, 8);
+AccelStepper s4(AccelStepper::HALF4WIRE, 23, 22, 21, 20);
 AccelStepper s5(AccelStepper::HALF4WIRE, 36, 35, 34, 33);
-AccelStepper picks[6] = {s1, s2, s3, s4, s5, s6};
+AccelStepper s6(AccelStepper::HALF4WIRE, 24, 25, 26, 27);
 
-//AccelStepper stepper3(AccelStepper::FULL2WIRE, 10, 11);
+// An array containing all of the steppers for easy access
+AccelStepper picks[6] = {s1, s2, s3, s4, s5, s6}; 
 
+// Arduino's setup function; Runs before main
 void setup()
 { 
+    // Initialize serial for debugging
     Serial.begin(9600);
   
+    // Initialize each of our led pins
     pinMode(led, OUTPUT);
     pinMode(led2, OUTPUT);
+    
+    // Initialize the timer to interrupt every 5ms
     Timer3.initialize(5000);
-    Timer3.attachInterrupt(blinkLED); // blinkLED to run every 0.15 seconds
+    Timer3.attachInterrupt(run_steppers);
   
-    //Set up timer for interrupts
-  
+    // Initialize each stepper with run settings
     s1.setMaxSpeed(1500.0);
     s1.setAcceleration(1000.0);
     s1.moveTo(0);
@@ -58,26 +63,34 @@ void setup()
     s6.setAcceleration(1000.0);
     s6.moveTo(0);
 
+    // Initialize inter-board communication pins as inputs
     pinMode(18, INPUT);
     pinMode(16, INPUT);
     pinMode(14, INPUT);
     pinMode(13, INPUT); 
 }
 
+// Globals for Led states
 int led2State = LOW;
 int ledState = LOW;
 
+// Globals for communication
 int flags[3] = {0, 0, 0};
 int go;
 
-void blinkLED(void)
+// The ISR for timer3
+void run_steppers(void)
 {
+  // Lets us know if the interrupt is functioning properly
+  // We can attach a scope to the high of the led to see the frequency
   if (led2State == LOW) {
     led2State = HIGH;
   } else {
-    //led2State = LOW;
+    led2State = LOW;
   }
   digitalWriteFast(led2, led2State);
+    
+  // Run each of the 6 steppers
   s1.run();
   s2.run();
   s3.run();
