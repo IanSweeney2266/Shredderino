@@ -1,2 +1,4 @@
 This folder contains the files from the source folder of our code for the stm32 microcontroller.
 The entire source (generated from cubemx can be found in the contained zip.
+
+All of the code written by us can be found in the files main.c, stepper.c, and stepper.h
