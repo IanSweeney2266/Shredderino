@@ -99,51 +99,54 @@ void run_steppers(void)
   s6.run();
 }
 
+// Arduino's main loop function; Runs forever
 void loop()
 {
-    // Change direction at the limits 
+    // Read from the other board 
+    // Three flags represent 3 bits of input (0-7)
     flags[0] = digitalRead(14);
     flags[1] = digitalRead(16);
     flags[2] = digitalRead(18);
     go = digitalRead(13);
 
+    // test the toggle pin
     if (go) {
-      if (flags[0] && flags[1] && !flags[2]) { // 6
+      if (flags[0] && flags[1] && !flags[2]) { // pick on 6
         digitalWrite(led, LOW);
         if (s6.distanceToGo() == 0) {
           Serial.println("string6");
           pick(6);
         } 
       }
-      else if (flags[0] && !flags[1] && flags[2]) { // 5
+      else if (flags[0] && !flags[1] && flags[2]) { // pick on 5
         digitalWrite(led, LOW);
         if (s5.distanceToGo() == 0) {
           Serial.println("string5");
           pick(5);
         } 
       }
-      else if (flags[0] && !flags[1] && !flags[2]) { // 4
+      else if (flags[0] && !flags[1] && !flags[2]) { // pick on 4
         digitalWrite(led, LOW);
         if (s4.distanceToGo() == 0) {
           Serial.println("string4");
           pick(4);
         } 
       }
-      else if (!flags[0] && flags[1] && flags[2]) { // 3
+      else if (!flags[0] && flags[1] && flags[2]) { // pick on 3
         digitalWrite(led, HIGH);
         if (s3.distanceToGo() == 0) {
           Serial.println("string3");
           pick(3);
         } 
       }
-      else if (!flags[0] && flags[1] && !flags[2]) { // 2
+      else if (!flags[0] && flags[1] && !flags[2]) { // pick on 2
         digitalWrite(led, HIGH);
         if (s2.distanceToGo() == 0) {
           Serial.println("string2");
           pick(2);
         } 
       }
-      else if (!flags[0] && !flags[1] && flags[2]) { // 1
+      else if (!flags[0] && !flags[1] && flags[2]) { // pick on 1
         digitalWrite(led, HIGH);
         if (s1.distanceToGo() == 0) {
           Serial.println("string1");
@@ -155,14 +158,23 @@ void loop()
       }
     }
     
+    // Delay 500ms
     delay(500);
     
 }
 
+// The pick function
+// This function alternates setpoints on for a given stepper when called
 void pick(int string) {
+  // The two setpoints. One on each side of the string
+  // Requires homing before it is turned on
   static int pos_1 = 250;
   static int pos_2 = -100;
+    
+  // Cool array version but it didn't work due to memory issues with global arrays in interrupts
   //picks[string-1].moveTo(picks[string-1].targetPosition() == pos ? 0 : pos);
+    
+  // Switch statement for chosing which string to pluck
   switch (string) {
     case 1:
       s1.moveTo(s1.targetPosition() == pos_1 ? pos_2 : pos_1);
